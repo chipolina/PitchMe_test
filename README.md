@@ -83,3 +83,30 @@ Steve Jobs – False, Never worked in UK
 * python3.7+
 * Только built-in модули, кроме следующего пункта
 * pydantic==1.7.3, requirements.txt не обязателен, считаем, что он есть на моем компьютере
+
+## Запуск скрипта:
+Скрипт запускается командой 
+```
+python solve.py --filter python_dev or ux_designer --input profile_data.json
+```
+
+## Пример запуска:
+После запуска в консоли появляются результаты со всеми несоответствиями
+```
+Alice Johnson – True
+====================================================================================================
+Johny Dep – False: 
+Last 2 jobs role are not in 'Product designer', 'UX-designer', 'UI/UX designer' 
+There are not 2 necessary skills
+Candidate lives not in Europe
+Last job experience less than 2 years
+====================================================================================================
+Math Daemon – True
+====================================================================================================
+Elizabeth Walker – False: 
+Last 2 jobs role are not in 'Product designer', 'UX-designer', 'UI/UX designer' 
+There are not 2 necessary skills
+====================================================================================================
+```
+
+Таже записываются логи в файл script_logs.log

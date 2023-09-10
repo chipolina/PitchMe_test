@@ -2,12 +2,33 @@ import argparse
 import datetime
 import json
 import logging
+from abc import ABC, abstractmethod
 from typing import List, Type
 
 from profile_schema import Profile
 
 
-class DeveloperRole:
+class Role(ABC):
+    @abstractmethod
+    def check_profile(self, profile):
+        pass
+
+    def check_total_experience(self, profile):
+        return sum((exp.ends_at - exp.starts_at).days // 365 for exp in profile.experiences if exp.ends_at)
+
+    def check_last_job_experience(self, profile):
+        last_job = profile.experiences[-1:][0]
+        if last_job.ends_at is None:
+            current_datetime = datetime.datetime.now()
+            formatted_date = current_datetime.strftime('%Y-%m-%d')
+            formatted_date = datetime.datetime.strptime(formatted_date, '%Y-%m-%d').date()
+            last_exp = (formatted_date - last_job.starts_at).days
+        else:
+            last_exp = (last_job.ends_at - last_job.starts_at).days
+        return last_exp
+
+
+class DeveloperRole(Role):
     def __init__(self):
         self.role_name = "python_dev"
 
@@ -20,12 +41,11 @@ class DeveloperRole:
         reasons = []
         if not any(job_place.company_name in FAANG for job_place in profile.experiences[-3:]):
             reasons.append("Not from a FAANG company")
-
         recent_positions = [exp.job_title.lower() for exp in profile.experiences[-3:]]
         if recent_positions.count("backend developer") + recent_positions.count("software engineer") < 3:
             reasons.append("Last 3 job positions are not Backend developer or Software engineer")
 
-        total_exp = sum((exp.ends_at - exp.starts_at).days // 365 for exp in profile.experiences if exp.ends_at)
+        total_exp = self.check_total_experience(profile)
         if total_exp < 8:
             reasons.append("Total experience less that 8 years")
 
@@ -40,7 +60,7 @@ class DeveloperRole:
         return reasons
 
 
-class UIRole:
+class UIRole(Role):
     def __init__(self):
         self.role_name = "ux_designer"
 
@@ -51,22 +71,18 @@ class UIRole:
         logging.info(f"Start checking {profile.first_name} {profile.last_name}")
         reasons = []
 
-        # Check last 2 job positions
         recent_position = [exp.job_title for exp in profile.experiences[-2:]]
         if not any(position in recent_position for position in ["Product designer", "UX-designer", "UI/UX designer"]):
             reasons.append("Last 2 jobs role are not in 'Product designer', 'UX-designer', 'UI/UX designer' ")
 
-        # Check skills
         all_skills = []
         req_skills = ["Figma", "Sketch", "UX-research", "Miro"]
         for job_skills in profile.experiences:
             all_skills.extend(job_skills.skills)
         all_skills = set(all_skills)
-
         if sum(skill in all_skills for skill in req_skills) < 2:
             reasons.append("There are not 2 necessary skills")
 
-        # Live in Europe
         eu_countries = ["Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark", "Estonia",
                         "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania",
                         "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia",
@@ -74,22 +90,12 @@ class UIRole:
         if profile.location.country not in eu_countries:
             reasons.append("Candidate lives not in Europe")
 
-        # Experience on last job more than 2 years
-
         sorted(profile.experiences, key=lambda exp: exp.starts_at)
-        last_job = profile.experiences[-1:][0]
-        if last_job.ends_at is None:
-            current_datetime = datetime.datetime.now()
-            formatted_date = current_datetime.strftime('%Y-%m-%d')
-            formatted_date = datetime.datetime.strptime(formatted_date, '%Y-%m-%d').date()
-            last_exp = (formatted_date - last_job.starts_at).days
-        else:
-            last_exp = (last_job.ends_at - last_job.starts_at).days
+        last_exp = self.check_last_job_experience(profile)
         if last_exp // 365 < 2:
             reasons.append("Last job experience less than 2 years")
 
-        # Total experience more than 5 years
-        total_exp = sum((exp.ends_at - exp.starts_at).days // 365 for exp in profile.experiences if exp.ends_at)
+        total_exp = self.check_total_experience(profile)
         if total_exp < 5:
             reasons.append("Total experience less that 5 years")
 
