@@ -2,17 +2,19 @@ import argparse
 import datetime
 import json
 import logging
+from typing import List, Type
+
 from profile_schema import Profile
 
 
-class DeveloperRole():
+class DeveloperRole:
     def __init__(self):
         self.role_name = "python_dev"
 
     def __str__(self):
         return "Python developer"
 
-    def check_profile(self, profile):
+    def check_profile(self, profile: Profile) -> List:
         logging.info(f"Start checking {profile.first_name} {profile.last_name}")
         FAANG = ["Facebook", "Amazon", "Apple", "Netflix", "Google"]
         reasons = []
@@ -38,14 +40,14 @@ class DeveloperRole():
         return reasons
 
 
-class UIRole():
+class UIRole:
     def __init__(self):
         self.role_name = "ux_designer"
 
     def __str__(self):
         return "UX Designer"
 
-    def check_profile(self, profile):
+    def check_profile(self, profile: Profile) -> List:
         logging.info(f"Start checking {profile.first_name} {profile.last_name}")
         reasons = []
 
@@ -76,7 +78,7 @@ class UIRole():
 
         sorted(profile.experiences, key=lambda exp: exp.starts_at)
         last_job = profile.experiences[-1:][0]
-        if last_job.ends_at == None:
+        if last_job.ends_at is None:
             current_datetime = datetime.datetime.now()
             formatted_date = current_datetime.strftime('%Y-%m-%d')
             formatted_date = datetime.datetime.strptime(formatted_date, '%Y-%m-%d').date()
@@ -103,7 +105,7 @@ class FilterProfiles:
         logging.basicConfig(filename='script_logs.log', level=logging.INFO,
                             format='%(asctime)s - %(levelname)s - %(message)s')
 
-    def run(self, role_to_search, input_file):
+    def run(self, role_to_search: str, input_file: str) -> None:
 
         logging.info(f'{"=" * 20}Script started{"=" * 20}')
         logging.info(f'Open input file {input_file}')
@@ -130,7 +132,7 @@ class FilterProfiles:
             print(result)
         logging.info(f'{"-" * 20}Script finished{"-" * 20}')
 
-    def filter_profiles(self, role_to_search, profiles):
+    def filter_profiles(self, role_to_search: Type, profiles: List[Profile]) -> List:
         results = []
         logging.info(f'Start checking for matching {role_to_search} from all candidates')
 
