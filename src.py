@@ -7,11 +7,8 @@ EU_COUNTRIES = ["Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Re
                 "Spain", "Sweden"]
 
 
-
-
 class ReqSkills(Enum):
     FIGMA = "Figma"
     SKETCH = "Sketch"
     UX_research = "UX-research"
     MIRO = "Miro"
-
