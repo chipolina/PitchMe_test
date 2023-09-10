@@ -6,17 +6,28 @@ from abc import ABC, abstractmethod
 from typing import List, Type
 
 from profile_schema import Profile
+from src import FAANG, EU_COUNTRIES, ReqSkills
 
 
 class Role(ABC):
     @abstractmethod
-    def check_profile(self, profile):
+    def check_profile(self, profile: Profile):
         pass
 
-    def check_total_experience(self, profile):
+    def check_total_experience(self, profile: Profile) -> int:
+        """
+        Calculate total candidate experience
+        :param profile: candidate profile
+        :return: number of experience in years
+        """
         return sum((exp.ends_at - exp.starts_at).days // 365 for exp in profile.experiences if exp.ends_at)
 
-    def check_last_job_experience(self, profile):
+    def check_last_job_experience(self, profile: Profile) -> int:
+        """
+        Calculate candidate last job experience
+        :param profile: candidate profile
+        :return: number of experience in years
+        """
         last_job = profile.experiences[-1:][0]
         if last_job.ends_at is None:
             current_datetime = datetime.datetime.now()
@@ -37,11 +48,11 @@ class DeveloperRole(Role):
 
     def check_profile(self, profile: Profile) -> List:
         logging.info(f"Start checking {profile.first_name} {profile.last_name}")
-        FAANG = ["Facebook", "Amazon", "Apple", "Netflix", "Google"]
         reasons = []
         if not any(job_place.company_name in FAANG for job_place in profile.experiences[-3:]):
             reasons.append("Not from a FAANG company")
         recent_positions = [exp.job_title.lower() for exp in profile.experiences[-3:]]
+
         if recent_positions.count("backend developer") + recent_positions.count("software engineer") < 3:
             reasons.append("Last 3 job positions are not Backend developer or Software engineer")
 
@@ -76,18 +87,15 @@ class UIRole(Role):
             reasons.append("Last 2 jobs role are not in 'Product designer', 'UX-designer', 'UI/UX designer' ")
 
         all_skills = []
-        req_skills = ["Figma", "Sketch", "UX-research", "Miro"]
+        req_skills = [skill.value for skill in
+                      [ReqSkills.FIGMA, ReqSkills.SKETCH, ReqSkills.MIRO, ReqSkills.UX_research]]
         for job_skills in profile.experiences:
             all_skills.extend(job_skills.skills)
         all_skills = set(all_skills)
         if sum(skill in all_skills for skill in req_skills) < 2:
             reasons.append("There are not 2 necessary skills")
 
-        eu_countries = ["Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic", "Denmark", "Estonia",
-                        "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania",
-                        "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia",
-                        "Spain", "Sweden"]
-        if profile.location.country not in eu_countries:
+        if profile.location.country not in EU_COUNTRIES:
             reasons.append("Candidate lives not in Europe")
 
         sorted(profile.experiences, key=lambda exp: exp.starts_at)
